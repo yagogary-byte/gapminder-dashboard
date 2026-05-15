@@ -1,245 +1,329 @@
 ---
-title: "Dashboard Interactivo con Gapminder"
-subtitle: "Producto Académico Colaborativo — Programación en R"
-author: "Equipo: Estudiante 1 · Estudiante 2 · Estudiante 3"
-date: "`r format(Sys.Date(), '%d %B %Y')`"
+title: "Dashboard Interactivo"
+subtitle: "Exploración del Desarrollo Humano con Gapminder"
+author: "Equipo: OSCAR GARY YARINGAÑO PIZARRO · Estudiante 2 · Estudiante 3"
+institute: "Universidad Continental · Maestría en Economía"
+date: "`r format(Sys.Date(), '%d de %B, %Y')`"
 output:
-  ioslides_presentation:
-    widescreen: true
-    smaller: false
-    logo: ""
-    css: ""
-    highlight: tango
-    transition: faster
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: [default, metropolis, metropolis-fonts]
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: "16:9"
+      slideNumberFormat: "%current% / %total%"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo=TRUE, message=FALSE, warning=FALSE,
-                      fig.align="center", fig.width=8, fig.height=4)
-library(gapminder); library(dplyr); library(ggplot2); library(plotly)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      fig.align = "center", dpi = 150,
+                      fig.width = 9, fig.height = 4.5)
+library(gapminder); library(dplyr); library(ggplot2)
 data("gapminder")
 ```
 
-## {.flexbox .vcenter}
+---
+class: inverse, center, middle
 
-<div style="text-align:center">
-  <h1 style="color:#2c3e50; font-size:2.4em">🌍 Dashboard Gapminder</h1>
-  <h3 style="color:#7f8c8d">Exploración del Desarrollo Humano Mundial</h3>
-  <br>
-  <p style="font-size:1.1em">**Herramientas:** R · Shiny · ggplot2 · plotly · dplyr</p>
-  <br>
-  <p>🔗 GitHub: `github.com/usuario/gapminder-dashboard`</p>
-  <p>🚀 App: `usuario.shinyapps.io/gap-dashboard`</p>
-</div>
+# 🌍 Dashboard Gapminder
+## Desarrollo Humano Mundial
+
+### Producto Académico Colaborativo
+**Curso: Programación en R**
 
 ---
 
-## Agenda
+# Agenda
 
-1. 🎯 **Objetivo** del proyecto
-2. 📊 **Base de datos** Gapminder
-3. 🏗️ **Arquitectura** de la aplicación Shiny
-4. 📈 **Visualizaciones** implementadas
-5. 🧮 **Modelo estadístico**
-6. ✅ **Conclusiones** y próximos pasos
+.pull-left[
+### ¿Qué veremos hoy?
+
+1. 🎯 Objetivo del proyecto
+2. 📊 Base de datos Gapminder
+3. 🏗️ Arquitectura Shiny
+4. 📈 Visualizaciones
+5. 🧮 Modelo estadístico
+6. ✅ Conclusiones
+]
+
+.pull-right[
+### Links del proyecto
+
+🔗 **GitHub:**  
+`github.com/yagogary-byte/gapminder-dashboard`
+
+🚀 **Dashboard:**  
+`oscar127.shinyapps.io/HerramientasInforma`
+
+📄 **Informe:**  
+`rpubs.com/oscar127/gapminder-pac`
+]
 
 ---
 
-## 🎯 Objetivo
+# 🎯 Objetivo del Proyecto
 
-> Desarrollar un **dashboard interactivo** en R Shiny que integre todo el flujo de análisis de datos: desde la manipulación hasta el modelamiento estadístico.
+.pull-left[
+### ¿Qué hace el dashboard?
 
-### ¿Qué preguntas responde?
+Permite explorar de forma **interactiva** los datos de desarrollo humano mundial entre **1952 y 2007**.
 
-- ¿Cómo evolucionó la **esperanza de vida** por país entre 1952 y 2007?
-- ¿Existe correlación entre **PIB per cápita** y longevidad?
+### Preguntas que responde:
+
+- ¿Cómo evolucionó la **esperanza de vida** por país?
+- ¿Hay correlación entre **PIB** y longevidad?
 - ¿Qué diferencias existen entre **continentes**?
-- ¿Qué variables **predicen** mejor la esperanza de vida?
+- ¿Qué **predice** mejor la esperanza de vida?
+]
+
+.pull-right[
+### Tecnologías usadas
+
+| Paquete | Función |
+|:--------|:--------|
+| `shiny` | Aplicación web reactiva |
+| `ggplot2` | Visualización estática |
+| `plotly` | Gráficos interactivos |
+| `dplyr` | Manipulación de datos |
+| `DT` | Tablas interactivas |
+| `gapminder` | Dataset principal |
+]
 
 ---
 
-## 📊 La base de datos: Gapminder
+# 📊 Base de Datos: Gapminder
 
-```{r resumen_datos, echo=FALSE}
+.pull-left[
+```{r info, echo=FALSE}
 data.frame(
-  Indicador = c("Observaciones", "Países", "Continentes", "Período", "Variables"),
-  Valor     = c(nrow(gapminder), n_distinct(gapminder$country),
-                n_distinct(gapminder$continent), "1952–2007 (c/5 años)", "6")
-) |> knitr::kable(align = c("l","r"))
+  Indicador = c("Observaciones","Países",
+                "Continentes","Período","Variables"),
+  Valor = c(nrow(gapminder),
+            n_distinct(gapminder$country),
+            n_distinct(gapminder$continent),
+            "1952 – 2007","6")
+) |> knitr::kable(format="html")
 ```
 
-**Variables clave:** `country` · `continent` · `year` · `lifeExp` · `pop` · `gdpPercap`
+### Variables clave
+- `country` · `continent` · `year`
+- `lifeExp` · `pop` · `gdpPercap`
 
-```{r head, echo=FALSE}
-head(gapminder, 4) |> knitr::kable()
+> Sin valores faltantes ✅
+]
+
+.pull-right[
+```{r head_data, echo=FALSE}
+gapminder |> head(6) |>
+  select(country, year, lifeExp, gdpPercap) |>
+  knitr::kable(format="html", digits=1)
 ```
+]
 
 ---
 
-## 🏗️ Arquitectura: UI
+# 🏗️ Arquitectura de la App Shiny
+
+.pull-left[
+### UI — Interfaz
 
 ```r
 ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
-      selectInput("continente", "Continente:", choices = continentes),
-      uiOutput("ui_pais"),           # ← dinámico
-      sliderInput("anio", "Año:",
-                  min=1952, max=2007, value=c(1952,2007), step=5),
-      uiOutput("kpis")               # ← KPIs reactivos
+*     selectInput("continente",...),
+*     uiOutput("ui_pais"),
+*     sliderInput("anio",...),
+      uiOutput("kpis")
     ),
     mainPanel(
       tabsetPanel(
-        tabPanel("📈 Tendencias",  ...),
-        tabPanel("🗺️ Continentes", ...),
-        tabPanel("🧮 Modelo",      ...),
-        tabPanel("📋 Datos",       ...)
+        tabPanel("Tendencias",...),
+        tabPanel("Continentes",...),
+        tabPanel("Modelo",...),
+        tabPanel("Datos",...)
       )
     )
   )
 )
 ```
+]
 
----
-
-## 🏗️ Arquitectura: Server (lógica reactiva)
+.pull-right[
+### Server — Lógica reactiva
 
 ```r
-server <- function(input, output, session) {
+server <- function(input, output, session){
 
-  # Filtrado reactivo de datos
-  datos_cont <- reactive({
-    gapminder %>%
-      filter(year >= input$anio[1], year <= input$anio[2]) %>%
-      { if (input$continente != "Todos")
-          filter(., continent == input$continente) else . }
+* datos <- reactive({
+    gapminder |>
+      filter(
+        year >= input$anio[1],
+        year <= input$anio[2]
+      )
   })
 
-  # Modelo estadístico reactivo
-  modelo <- reactive({
-    lm(lifeExp ~ log(gdpPercap) + year + continent,
-       data = datos_cont())
+* modelo <- reactive({
+    lm(lifeExp ~
+       log(gdpPercap) +
+       year + continent,
+       data = datos())
   })
-
-  # Gráficos con renderPlotly()
-  output$plot_vida <- renderPlotly({ ... })
 }
 ```
+]
 
 ---
 
-## 📈 Visualización: Tendencia de esperanza de vida
+# 📈 Tendencia: Esperanza de Vida
 
-```{r plot_vida, echo=FALSE, fig.height=3.8}
-peru <- gapminder %>% filter(country == "Peru")
-p <- ggplot(peru, aes(x=year, y=lifeExp)) +
-  geom_area(fill="#1abc9c", alpha=0.2) +
-  geom_line(color="#1abc9c", size=1.4) +
-  geom_point(color="#0e6655", size=3.5) +
-  labs(title="Esperanza de vida — Perú (1952–2007)",
-       x="Año", y="Años de vida") +
-  theme_minimal(base_size=13)
-ggplotly(p)
+```{r plot_vida, echo=FALSE, fig.height=4}
+peru <- gapminder |> filter(country == "Peru")
+ggplot(peru, aes(x = year, y = lifeExp)) +
+  geom_area(fill = "#1abc9c", alpha = 0.25) +
+  geom_line(color = "#1abc9c", linewidth = 1.5) +
+  geom_point(color = "#0e6655", size = 4) +
+  geom_text(aes(label = round(lifeExp, 1)),
+            vjust = -1, size = 3.2, color = "#0e6655") +
+  labs(title = "Esperanza de vida — Perú (1952–2007)",
+       x = "Año", y = "Años de vida") +
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(face = "bold", color = "#2c3e50"))
 ```
 
 ---
 
-## 🗺️ Visualización: Comparación entre continentes
+# 🗺️ Comparación entre Continentes
 
-```{r plot_box, echo=FALSE, fig.height=3.8}
-p2 <- gapminder %>% filter(year==2007) %>%
-  ggplot(aes(x=reorder(continent,lifeExp,median), y=lifeExp, fill=continent)) +
-  geom_boxplot(alpha=0.75, show.legend=FALSE) +
-  geom_jitter(width=0.2, alpha=0.25, size=1.2) +
-  labs(title="Esperanza de vida por continente — 2007", x=NULL, y="Años") +
-  theme_minimal(base_size=13)
-ggplotly(p2)
+```{r plot_box, echo=FALSE, fig.height=4}
+gapminder |> filter(year == 2007) |>
+  ggplot(aes(x = reorder(continent, lifeExp, median),
+             y = lifeExp, fill = continent)) +
+  geom_boxplot(alpha = 0.75, show.legend = FALSE) +
+  geom_jitter(width = 0.2, alpha = 0.3, size = 1.5) +
+  scale_fill_brewer(palette = "Set2") +
+  labs(title = "Distribución de esperanza de vida por continente — 2007",
+       x = NULL, y = "Años de vida") +
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(face = "bold", color = "#2c3e50"))
 ```
 
 ---
 
-## 💡 Visualización: Gráfico de burbuja (Hans Rosling)
+# 💡 Gráfico de Burbuja (estilo Hans Rosling)
 
-```{r plot_burbuja, echo=FALSE, fig.height=3.8}
-p3 <- gapminder %>% filter(year==2007) %>%
-  ggplot(aes(x=gdpPercap, y=lifeExp, size=pop/1e6, color=continent,
-             text=paste0("<b>",country,"</b><br>PIB: $",round(gdpPercap),
-                          "<br>Vida: ",round(lifeExp,1)," años"))) +
-  geom_point(alpha=0.65) +
-  scale_x_log10(labels=scales::comma) + scale_size(range=c(2,18)) +
-  labs(title="PIB vs Esperanza de vida — 2007",
-       x="PIB per cápita (log)", y="Años de vida", color="Continente") +
-  theme_minimal(base_size=13)
-ggplotly(p3, tooltip="text")
+```{r plot_burbuja, echo=FALSE, fig.height=4}
+gapminder |> filter(year == 2007) |>
+  ggplot(aes(x = gdpPercap, y = lifeExp,
+             size = pop / 1e6, color = continent)) +
+  geom_point(alpha = 0.7) +
+  scale_x_log10(labels = scales::comma) +
+  scale_size(range = c(2, 18), name = "Pob. (M)") +
+  scale_color_brewer(palette = "Set1") +
+  labs(title = "PIB per cápita vs Esperanza de vida — 2007",
+       subtitle = "Tamaño proporcional a la población",
+       x = "PIB per cápita (USD, escala log)",
+       y = "Esperanza de vida (años)", color = "Continente") +
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(face = "bold", color = "#2c3e50"))
 ```
 
 ---
 
-## 🧮 Modelo de Regresión Lineal Múltiple
+# 🧮 Modelo de Regresión Lineal Múltiple
 
+.pull-left[
 ### Especificación
 
-$$\text{lifeExp}_i = \beta_0 + \beta_1 \cdot \log(\text{gdpPercap}_i) + \beta_2 \cdot \text{year}_i + \beta_k \cdot \text{continent}_i + \varepsilon_i$$
+$$\text{lifeExp} = \beta_0 + \beta_1 \log(\text{GDP}) + \beta_2 \cdot \text{year} + \beta_k \cdot \text{continent} + \varepsilon$$
 
-```{r modelo_resumen, echo=FALSE}
-m <- lm(lifeExp ~ log(gdpPercap) + year + continent, data=gapminder)
+### Resultados
+
+```{r modelo_res, echo=FALSE}
+m <- lm(lifeExp ~ log(gdpPercap) + year + continent,
+        data = gapminder)
 s <- summary(m)
 data.frame(
-  Métrica = c("R²", "R² ajustado", "F-statistic p-value", "Observaciones"),
-  Valor   = c(round(s$r.squared,4), round(s$adj.r.squared,4),
-              format.pval(pf(s$fstatistic[1],s$fstatistic[2],
-                             s$fstatistic[3],lower.tail=FALSE)),
+  Métrica = c("R²","R² ajustado","Observaciones"),
+  Valor   = c(round(s$r.squared,4),
+              round(s$adj.r.squared,4),
               nrow(gapminder))
-) |> knitr::kable(align=c("l","r"))
+) |> knitr::kable(format="html")
 ```
 
-> El modelo explica el **`r round(s$r.squared*100,1)`%** de la variabilidad en esperanza de vida.
+> El modelo explica el **`r round(s$r.squared*100,1)`%** de la variabilidad
+]
+
+.pull-right[
+```{r plot_modelo, echo=FALSE, fig.height=4.5, fig.width=5.5}
+gapminder |> mutate(log_gdp = log(gdpPercap)) |>
+  ggplot(aes(x = log_gdp, y = lifeExp, color = continent)) +
+  geom_point(alpha = 0.25, size = 1.2) +
+  geom_smooth(method = "lm", se = TRUE, linewidth = 1) +
+  scale_color_brewer(palette = "Set1") +
+  labs(x = "log(PIB per cápita)", y = "Esperanza de vida",
+       color = "Continente") +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "bottom")
+```
+]
 
 ---
 
-## 🧮 Visualización del modelo
+# ✅ Conclusiones
 
-```{r plot_modelo, echo=FALSE, fig.height=3.8}
-p4 <- gapminder %>% mutate(log_gdp=log(gdpPercap)) %>%
-  ggplot(aes(x=log_gdp, y=lifeExp, color=continent)) +
-  geom_point(alpha=0.3, size=1.5) +
-  geom_smooth(method="lm", se=TRUE, size=1.1) +
-  labs(title=paste0("Regresión: log(PIB) vs Esperanza de vida  |  R² = ",
-                     round(s$r.squared,3)),
-       x="log(PIB per cápita)", y="Esperanza de vida (años)", color="Continente") +
-  theme_minimal(base_size=13)
-ggplotly(p4)
-```
+.pull-left[
+### 💪 Bondades
 
----
+- Alta **interactividad** con plotly y Shiny
+- Flujo completo: datos → visualización → modelo
+- R² > 0.75: modelo con buena predicción
+- Código reproducible en GitHub
+- Publicado en shinyapps.io (acceso libre)
+]
 
-## ✅ Conclusiones
+.pull-right[
+### ⚠️ Limitaciones y Mejoras futuras
 
-### Bondades
-- Integración completa: manipulación → visualización → modelado
-- Interactividad total gracias a `shiny` + `plotly`
-- Modelo con R² > 0.75: buena capacidad predictiva
+**Limitaciones:**
+- Dataset hasta 2007 (sin datos recientes)
+- Modelo lineal (no captura no linealidades)
+- Plan gratuito de shinyapps.io
 
-### Limitaciones
-- Dataset limitado hasta 2007
-- Modelo lineal no captura toda la complejidad
-- Plan gratuito de shinyapps.io tiene límites de uso
-
-### Próximas mejoras
+**Mejoras futuras:**
 - Datos actualizados (API World Bank)
 - Animación temporal (estilo Rosling)
 - Descarga de datos filtrados en CSV
+- Modelos de efectos fijos
+]
+
+---
+class: inverse, center, middle
+
+# ¡Gracias!
+
+### 🔗 Links del Proyecto
+
+**GitHub:** `github.com/yagogary-byte/gapminder-dashboard`
+
+**Dashboard:** `oscar127.shinyapps.io/HerramientasInforma`
+
+**Informe:** `rpubs.com/oscar127/gapminder-pac`
 
 ---
 
-## {.flexbox .vcenter}
+# 📚 Referencias
 
-<div style="text-align:center">
-  <h2 style="color:#2c3e50">¡Gracias!</h2>
-  <br>
-  <p style="font-size:1.2em">🔗 **GitHub:** `github.com/usuario/gapminder-dashboard`</p>
-  <p style="font-size:1.2em">🚀 **Dashboard:** `usuario.shinyapps.io/gap-dashboard`</p>
-  <p style="font-size:1.2em">📄 **Informe:** `rpubs.com/usuario/gapminder-pac`</p>
-  <br>
-  <h3 style="color:#7f8c8d">¿Preguntas?</h3>
-</div>
+1. Bryan, J. (2017). *gapminder: Data from Gapminder*. R package v0.3.0.
+
+2. Chang, W. et al. (2021). *shiny: Web Application Framework for R*.
+
+3. Heiss, F. (2020). *Using R for Introductory Econometrics* (2nd ed.).
+
+4. Rosling, H. (2018). *Factfulness*. Flatiron Books.
+
+5. Wickham, H. (2016). *ggplot2: Elegant Graphics for Data Analysis*. Springer.
+
+6. Wickham, H. et al. (2021). *dplyr: A Grammar of Data Manipulation*.
