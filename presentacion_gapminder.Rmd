@@ -1,0 +1,245 @@
+---
+title: "Dashboard Interactivo con Gapminder"
+subtitle: "Producto Académico Colaborativo — Programación en R"
+author: "Equipo: Estudiante 1 · Estudiante 2 · Estudiante 3"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output:
+  ioslides_presentation:
+    widescreen: true
+    smaller: false
+    logo: ""
+    css: ""
+    highlight: tango
+    transition: faster
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE, message=FALSE, warning=FALSE,
+                      fig.align="center", fig.width=8, fig.height=4)
+library(gapminder); library(dplyr); library(ggplot2); library(plotly)
+data("gapminder")
+```
+
+## {.flexbox .vcenter}
+
+<div style="text-align:center">
+  <h1 style="color:#2c3e50; font-size:2.4em">🌍 Dashboard Gapminder</h1>
+  <h3 style="color:#7f8c8d">Exploración del Desarrollo Humano Mundial</h3>
+  <br>
+  <p style="font-size:1.1em">**Herramientas:** R · Shiny · ggplot2 · plotly · dplyr</p>
+  <br>
+  <p>🔗 GitHub: `github.com/usuario/gapminder-dashboard`</p>
+  <p>🚀 App: `usuario.shinyapps.io/gap-dashboard`</p>
+</div>
+
+---
+
+## Agenda
+
+1. 🎯 **Objetivo** del proyecto
+2. 📊 **Base de datos** Gapminder
+3. 🏗️ **Arquitectura** de la aplicación Shiny
+4. 📈 **Visualizaciones** implementadas
+5. 🧮 **Modelo estadístico**
+6. ✅ **Conclusiones** y próximos pasos
+
+---
+
+## 🎯 Objetivo
+
+> Desarrollar un **dashboard interactivo** en R Shiny que integre todo el flujo de análisis de datos: desde la manipulación hasta el modelamiento estadístico.
+
+### ¿Qué preguntas responde?
+
+- ¿Cómo evolucionó la **esperanza de vida** por país entre 1952 y 2007?
+- ¿Existe correlación entre **PIB per cápita** y longevidad?
+- ¿Qué diferencias existen entre **continentes**?
+- ¿Qué variables **predicen** mejor la esperanza de vida?
+
+---
+
+## 📊 La base de datos: Gapminder
+
+```{r resumen_datos, echo=FALSE}
+data.frame(
+  Indicador = c("Observaciones", "Países", "Continentes", "Período", "Variables"),
+  Valor     = c(nrow(gapminder), n_distinct(gapminder$country),
+                n_distinct(gapminder$continent), "1952–2007 (c/5 años)", "6")
+) |> knitr::kable(align = c("l","r"))
+```
+
+**Variables clave:** `country` · `continent` · `year` · `lifeExp` · `pop` · `gdpPercap`
+
+```{r head, echo=FALSE}
+head(gapminder, 4) |> knitr::kable()
+```
+
+---
+
+## 🏗️ Arquitectura: UI
+
+```r
+ui <- fluidPage(
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("continente", "Continente:", choices = continentes),
+      uiOutput("ui_pais"),           # ← dinámico
+      sliderInput("anio", "Año:",
+                  min=1952, max=2007, value=c(1952,2007), step=5),
+      uiOutput("kpis")               # ← KPIs reactivos
+    ),
+    mainPanel(
+      tabsetPanel(
+        tabPanel("📈 Tendencias",  ...),
+        tabPanel("🗺️ Continentes", ...),
+        tabPanel("🧮 Modelo",      ...),
+        tabPanel("📋 Datos",       ...)
+      )
+    )
+  )
+)
+```
+
+---
+
+## 🏗️ Arquitectura: Server (lógica reactiva)
+
+```r
+server <- function(input, output, session) {
+
+  # Filtrado reactivo de datos
+  datos_cont <- reactive({
+    gapminder %>%
+      filter(year >= input$anio[1], year <= input$anio[2]) %>%
+      { if (input$continente != "Todos")
+          filter(., continent == input$continente) else . }
+  })
+
+  # Modelo estadístico reactivo
+  modelo <- reactive({
+    lm(lifeExp ~ log(gdpPercap) + year + continent,
+       data = datos_cont())
+  })
+
+  # Gráficos con renderPlotly()
+  output$plot_vida <- renderPlotly({ ... })
+}
+```
+
+---
+
+## 📈 Visualización: Tendencia de esperanza de vida
+
+```{r plot_vida, echo=FALSE, fig.height=3.8}
+peru <- gapminder %>% filter(country == "Peru")
+p <- ggplot(peru, aes(x=year, y=lifeExp)) +
+  geom_area(fill="#1abc9c", alpha=0.2) +
+  geom_line(color="#1abc9c", size=1.4) +
+  geom_point(color="#0e6655", size=3.5) +
+  labs(title="Esperanza de vida — Perú (1952–2007)",
+       x="Año", y="Años de vida") +
+  theme_minimal(base_size=13)
+ggplotly(p)
+```
+
+---
+
+## 🗺️ Visualización: Comparación entre continentes
+
+```{r plot_box, echo=FALSE, fig.height=3.8}
+p2 <- gapminder %>% filter(year==2007) %>%
+  ggplot(aes(x=reorder(continent,lifeExp,median), y=lifeExp, fill=continent)) +
+  geom_boxplot(alpha=0.75, show.legend=FALSE) +
+  geom_jitter(width=0.2, alpha=0.25, size=1.2) +
+  labs(title="Esperanza de vida por continente — 2007", x=NULL, y="Años") +
+  theme_minimal(base_size=13)
+ggplotly(p2)
+```
+
+---
+
+## 💡 Visualización: Gráfico de burbuja (Hans Rosling)
+
+```{r plot_burbuja, echo=FALSE, fig.height=3.8}
+p3 <- gapminder %>% filter(year==2007) %>%
+  ggplot(aes(x=gdpPercap, y=lifeExp, size=pop/1e6, color=continent,
+             text=paste0("<b>",country,"</b><br>PIB: $",round(gdpPercap),
+                          "<br>Vida: ",round(lifeExp,1)," años"))) +
+  geom_point(alpha=0.65) +
+  scale_x_log10(labels=scales::comma) + scale_size(range=c(2,18)) +
+  labs(title="PIB vs Esperanza de vida — 2007",
+       x="PIB per cápita (log)", y="Años de vida", color="Continente") +
+  theme_minimal(base_size=13)
+ggplotly(p3, tooltip="text")
+```
+
+---
+
+## 🧮 Modelo de Regresión Lineal Múltiple
+
+### Especificación
+
+$$\text{lifeExp}_i = \beta_0 + \beta_1 \cdot \log(\text{gdpPercap}_i) + \beta_2 \cdot \text{year}_i + \beta_k \cdot \text{continent}_i + \varepsilon_i$$
+
+```{r modelo_resumen, echo=FALSE}
+m <- lm(lifeExp ~ log(gdpPercap) + year + continent, data=gapminder)
+s <- summary(m)
+data.frame(
+  Métrica = c("R²", "R² ajustado", "F-statistic p-value", "Observaciones"),
+  Valor   = c(round(s$r.squared,4), round(s$adj.r.squared,4),
+              format.pval(pf(s$fstatistic[1],s$fstatistic[2],
+                             s$fstatistic[3],lower.tail=FALSE)),
+              nrow(gapminder))
+) |> knitr::kable(align=c("l","r"))
+```
+
+> El modelo explica el **`r round(s$r.squared*100,1)`%** de la variabilidad en esperanza de vida.
+
+---
+
+## 🧮 Visualización del modelo
+
+```{r plot_modelo, echo=FALSE, fig.height=3.8}
+p4 <- gapminder %>% mutate(log_gdp=log(gdpPercap)) %>%
+  ggplot(aes(x=log_gdp, y=lifeExp, color=continent)) +
+  geom_point(alpha=0.3, size=1.5) +
+  geom_smooth(method="lm", se=TRUE, size=1.1) +
+  labs(title=paste0("Regresión: log(PIB) vs Esperanza de vida  |  R² = ",
+                     round(s$r.squared,3)),
+       x="log(PIB per cápita)", y="Esperanza de vida (años)", color="Continente") +
+  theme_minimal(base_size=13)
+ggplotly(p4)
+```
+
+---
+
+## ✅ Conclusiones
+
+### Bondades
+- Integración completa: manipulación → visualización → modelado
+- Interactividad total gracias a `shiny` + `plotly`
+- Modelo con R² > 0.75: buena capacidad predictiva
+
+### Limitaciones
+- Dataset limitado hasta 2007
+- Modelo lineal no captura toda la complejidad
+- Plan gratuito de shinyapps.io tiene límites de uso
+
+### Próximas mejoras
+- Datos actualizados (API World Bank)
+- Animación temporal (estilo Rosling)
+- Descarga de datos filtrados en CSV
+
+---
+
+## {.flexbox .vcenter}
+
+<div style="text-align:center">
+  <h2 style="color:#2c3e50">¡Gracias!</h2>
+  <br>
+  <p style="font-size:1.2em">🔗 **GitHub:** `github.com/usuario/gapminder-dashboard`</p>
+  <p style="font-size:1.2em">🚀 **Dashboard:** `usuario.shinyapps.io/gap-dashboard`</p>
+  <p style="font-size:1.2em">📄 **Informe:** `rpubs.com/usuario/gapminder-pac`</p>
+  <br>
+  <h3 style="color:#7f8c8d">¿Preguntas?</h3>
+</div>
