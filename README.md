@@ -11,7 +11,7 @@
 | Recurso | URL |
 |:--------|:----|
 | 🚀 Dashboard en línea |https://oscar127.shinyapps.io/HerramientasInforma/
-| 📄 Informe RPubs | https://rpubs.com/usuario/gapminder-pac |
+| 📄 Informe RPubs | https://rpubs.com/oscar127/1432671
 | 📊 Dataset | [Paquete {gapminder}](https://CRAN.R-project.org/package=gapminder) |
 
 ---
