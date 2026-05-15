@@ -10,7 +10,7 @@
 
 | Recurso | URL |
 |:--------|:----|
-| 🚀 Dashboard en línea | https://usuario.shinyapps.io/gap-dashboard |
+| 🚀 Dashboard en línea |https://oscar127.shinyapps.io/HerramientasInforma/
 | 📄 Informe RPubs | https://rpubs.com/usuario/gapminder-pac |
 | 📊 Dataset | [Paquete {gapminder}](https://CRAN.R-project.org/package=gapminder) |
 
